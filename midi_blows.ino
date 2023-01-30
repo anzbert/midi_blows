@@ -15,8 +15,8 @@
 
 #define SEALEVELPRESSURE_HPA (1013.25)
 
-#define MIDI_CHAN 10 // (0 to 15) +1 = (1 to 16)
-#define MIDI_CC 11   // control change number (0-127)
+#define MIDI_CHAN 10 // (0 to 15) +1 = (Channel 1 to 16)
+#define MIDI_CC 11   // control change number (0 - 127)
 
 Adafruit_BME280 bme; // use I2C
 // Adafruit_BME280 bme(BME_CS); // hardware SPI
@@ -56,29 +56,23 @@ void setup()
     // P_ovs = 4
     // = 11.5ms + 0.5ms standby = 12ms -> 1 / 0.012s = 83 Hz
 
-    bme.setSampling(Adafruit_BME280::MODE_NORMAL,
-                    Adafruit_BME280::SAMPLING_X1,   // temperature
-                    Adafruit_BME280::SAMPLING_X4,   // pressure
-                    Adafruit_BME280::SAMPLING_NONE, // humidity
-                    Adafruit_BME280::FILTER_X16,
-                    Adafruit_BME280::STANDBY_MS_0_5);
-    delayBetweenMeasurements = 12;
+    // bme.setSampling(Adafruit_BME280::MODE_NORMAL,   // normal mode = automatic continuous measurements
+    //                 Adafruit_BME280::SAMPLING_X1,   // temperature
+    //                 Adafruit_BME280::SAMPLING_X4,   // pressure
+    //                 Adafruit_BME280::SAMPLING_NONE, // humidity
+    //                 Adafruit_BME280::FILTER_X16,    // Lower = More Noise, but more responsive
+    //                 Adafruit_BME280::STANDBY_MS_0_5); // 0.5ms is lowest available value
+    // delayBetweenMeasurements = 12;
 
     /////////////////////////////////////////////////////////////////////////
     // Let's experiment with the standard settings to reduce latency:
-    //
-    // 1 + (2 * T_ovs) + (2 * P_ovs + 0.5)
-    // T_ovs = 1
-    // P_ovs = 4
-    // = 9.5ms + 0.5ms standby -> 100Hz
-
-    // bme.setSampling(Adafruit_BME280::MODE_NORMAL,
-    //                 Adafruit_BME280::SAMPLING_NONE, // temperature
-    //                 Adafruit_BME280::SAMPLING_X4,   // pressure
-    //                 Adafruit_BME280::SAMPLING_NONE, // humidity
-    //                 Adafruit_BME280::FILTER_X8,
-    //                 Adafruit_BME280::STANDBY_MS_0_5);
-    // delayBetweenMeasurements = 10;
+    bme.setSampling(Adafruit_BME280::MODE_NORMAL,
+                    Adafruit_BME280::SAMPLING_NONE, // temperature
+                    Adafruit_BME280::SAMPLING_X4,   // pressure
+                    Adafruit_BME280::SAMPLING_NONE, // humidity
+                    Adafruit_BME280::FILTER_X4,
+                    Adafruit_BME280::STANDBY_MS_0_5);
+    delayBetweenMeasurements = 10;
 }
 
 void loop()
