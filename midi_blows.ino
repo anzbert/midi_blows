@@ -1,24 +1,28 @@
+// Based on Adafruit advanced BME280 example, with "gaming" setup
+
 #include <Wire.h>
 #include <SPI.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BME280.h>
 #include <MIDIUSB.h>
 
-#define BME_SCK 13
-#define BME_MISO 12
-#define BME_MOSI 11
-#define BME_CS 10
+#define BME_SCK 13  // only used for SPI communication
+#define BME_MISO 12 // only used for SPI communication
+#define BME_MOSI 11 // only used for SPI communication
+#define BME_CS 10   // only used for SPI communication
 #define SEALEVELPRESSURE_HPA (1013.25)
 
-Adafruit_BME280 bme; // I2C communication
-float baselinePressure = 0;
+Adafruit_BME280 bme; // use I2C communication !!
+
 unsigned long delayTime = 12;
 
-byte cc = 10; // CC (0-127)
-float rawState = 0;
-float normalizedState = 0;
-int midiCurrentState = 0; // Current state of the CC midi value 7bit
-int midiPrevState = 0;    // Previous loop state of the CC midi value 7bit
+float baselinePressure = SEALEVELPRESSURE_HPA;
+float rawPressure = SEALEVELPRESSURE_HPA;
+float normalizedPressure = 0;
+
+byte midiCC = 9;         // control change number (0-127)
+byte midiCurrentCC = 0;  // Current state of the CC midi value 7bit
+byte midiPreviousCC = 0; // Previous loop state of the CC midi value 7bit
 
 void setup()
 {
@@ -54,45 +58,42 @@ void setup()
 
 void loop()
 {
-    // bme.takeForcedMeasurement(); // has no effect in normal mode, can be removed
-
+    // bme.takeForcedMeasurement(); // has no effect in normal mode, so could probably be removed
     xfader();
-    //  Serial.println(bme.readPressure());
-
     delay(delayTime);
-}
-
-void controlChange(byte channel, byte control, byte value)
-{
-    midiEventPacket_t event = {0x0B, 0xB0 | channel, control, value};
-    MidiUSB.sendMIDI(event);
 }
 
 void xfader()
 {
-    rawState = bme.readPressure(); // raw input
+    rawPressure = bme.readPressure();
+    // Serial.println(rawPressure);
 
-    if (rawState > baselinePressure)
+    if (rawPressure > baselinePressure)
     {
-        normalizedState = rawState - baselinePressure;
+        normalizedPressure = rawPressure - baselinePressure;
     }
     else
     {
-        normalizedState = 0;
+        normalizedPressure = 0;
     }
+    // Serial.println(applyCurve(normalizedPressure));
 
-    // midiCurrentState = normalizedState * 0.1;
-    midiCurrentState = constrain(applyCurve(normalizedState), 0, 127);
+    midiCurrentCC = constrain(applyCurve(normalizedPressure), 0, 127);
+    // Serial.println(midiCurrentCC);
 
-    if (midiPrevState != midiCurrentState)
-    { // only send CC change if midistate has changed
+    if (midiPreviousCC != midiCurrentCC)
+    {
+        appendControlChangeToBuffer(10, midiCC, midiCurrentCC);
+        MidiUSB.flush(); // Sends Midi Buffer content
 
-        controlChange(10, cc, midiCurrentState); // send control change (channel, CC, value) to Midi Buffer
-        MidiUSB.flush();                         // flush Midi Buffer (-> send CC)
-        // Serial.println(midiCurrentState); // print midi position
-
-        midiPrevState = midiCurrentState; // Stores the current Midistate to compare with the next on next loop
+        midiPreviousCC = midiCurrentCC;
     }
+}
+
+void appendControlChangeToBuffer(byte channel, byte control, byte value)
+{
+    midiEventPacket_t event = {0x0B, 0xB0 | channel, control, value};
+    MidiUSB.sendMIDI(event);
 }
 
 int applyCurve(float input)
