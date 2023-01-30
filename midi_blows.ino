@@ -20,7 +20,7 @@ float baselinePressure = SEALEVELPRESSURE_HPA;
 float rawPressure = SEALEVELPRESSURE_HPA;
 float normalizedPressure = 0;
 
-byte midiCC = 9;         // control change number (0-127)
+byte midiCC = 11;        // control change number (0-127)
 byte midiCurrentCC = 0;  // Current state of the CC midi value 7bit
 byte midiPreviousCC = 0; // Previous loop state of the CC midi value 7bit
 
