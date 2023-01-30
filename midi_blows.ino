@@ -6,69 +6,93 @@
 #include <Adafruit_BME280.h>
 #include <MIDIUSB.h>
 
-#define BME_SCK 13  // only used for SPI communication
-#define BME_MISO 12 // only used for SPI communication
-#define BME_MOSI 11 // only used for SPI communication
-#define BME_CS 10   // only used for SPI communication
+#define BME_SCK 13  // for SPI communication
+#define BME_MISO 12 // for SPI communication
+#define BME_MOSI 11 // for SPI communication
+#define BME_CS 10   // for SPI communication
+
+#define I2C_ADDRESS 0x76 // bme280 sensor address for I2C communication
+
 #define SEALEVELPRESSURE_HPA (1013.25)
 
-Adafruit_BME280 bme; // use I2C communication !!
+#define MIDI_CHAN 10 // (0 to 15) +1 = (1 to 16)
+#define MIDI_CC 11   // control change number (0-127)
 
-unsigned long delayTime = 12;
+Adafruit_BME280 bme; // use I2C
+// Adafruit_BME280 bme(BME_CS); // hardware SPI
+// Adafruit_BME280 bme(BME_CS, BME_MOSI, BME_MISO, BME_SCK); // software SPI
 
 float baselinePressure = SEALEVELPRESSURE_HPA;
 float rawPressure = SEALEVELPRESSURE_HPA;
 float normalizedPressure = 0;
 
-byte midiCC = 11;        // control change number (0-127)
-byte midiCurrentCC = 0;  // Current state of the CC midi value 7bit
-byte midiPreviousCC = 0; // Previous loop state of the CC midi value 7bit
+unsigned long delayBetweenMeasurements; // in ms
+
+byte midiCurrentCC = 0;  // Current state of the CC midi value in 7bit
+byte midiPreviousCC = 0; // Previous loop state of the CC midi value
 
 void setup()
 {
     Serial.begin(9600);
 
-    if (!bme.begin(0x76, &Wire))
+    while (!bme.begin(I2C_ADDRESS, &Wire))
     {
-        while (1)
-        {
-            Serial.println("Could not find a valid BME280 sensor, check wiring!");
-            delay(3000);
-        }
+        Serial.println("Could not find a valid BME280 sensor, check wiring!");
+        delay(3000);
     }
 
-    // Serial.println("-- Gaming Scenario --");
-    // Serial.println("normal mode, 4x pressure / 1x temperature / 0x humidity oversampling,");
-    // Serial.println("= humidity off, 0.5ms standby period, filter 16x");
+    baselinePressure = bme.readPressure();
+
+    // Sensor Settings (Datasheet: https://www.bosch-sensortec.com/products/environmental-sensors/humidity-sensors-bme280/#documents)
+
+    //////////////////////////////////////////////////////////////////////////
+    // Suggested Gaming Settings from Datasheet:
+    // normal mode, 4x pressure / 1x temperature / 0x humidity oversampling,
+    // = humidity off, 0.5ms standby period, filter 16x
+    //
+    // Suggested rate for standard gaming settings is 83Hz:
+    // 1 + (2 * T_ovs) + (2 * P_ovs + 0.5)
+    // T_ovs = 1
+    // P_ovs = 4
+    // = 11.5ms + 0.5ms standby = 12ms -> 1 / 0.012s = 83 Hz
+
     bme.setSampling(Adafruit_BME280::MODE_NORMAL,
                     Adafruit_BME280::SAMPLING_X1,   // temperature
                     Adafruit_BME280::SAMPLING_X4,   // pressure
                     Adafruit_BME280::SAMPLING_NONE, // humidity
                     Adafruit_BME280::FILTER_X16,
                     Adafruit_BME280::STANDBY_MS_0_5);
+    delayBetweenMeasurements = 12;
 
-    // Suggested rate is 83Hz
+    /////////////////////////////////////////////////////////////////////////
+    // Let's experiment with the standard settings to reduce latency:
+    //
     // 1 + (2 * T_ovs) + (2 * P_ovs + 0.5)
     // T_ovs = 1
     // P_ovs = 4
-    // = 11.5ms + 0.5ms standby
+    // = 9.5ms + 0.5ms standby -> 100Hz
 
-    baselinePressure = bme.readPressure();
+    // bme.setSampling(Adafruit_BME280::MODE_NORMAL,
+    //                 Adafruit_BME280::SAMPLING_NONE, // temperature
+    //                 Adafruit_BME280::SAMPLING_X4,   // pressure
+    //                 Adafruit_BME280::SAMPLING_NONE, // humidity
+    //                 Adafruit_BME280::FILTER_X8,
+    //                 Adafruit_BME280::STANDBY_MS_0_5);
+    // delayBetweenMeasurements = 10;
 }
 
 void loop()
 {
-    // bme.takeForcedMeasurement(); // has no effect in normal mode, so could probably be removed
-    xfader();
-    delay(delayTime);
+    // bme.takeForcedMeasurement(); // has no effect in normal mode, so can be removed
+    sendPressureAsCC(bme.readPressure());
+    delay(delayBetweenMeasurements);
 }
 
-void xfader()
+void sendPressureAsCC(float rawPressure)
 {
-    rawPressure = bme.readPressure();
     // Serial.println(rawPressure);
-
     if (rawPressure > baselinePressure)
+
     {
         normalizedPressure = rawPressure - baselinePressure;
     }
@@ -83,14 +107,14 @@ void xfader()
 
     if (midiPreviousCC != midiCurrentCC)
     {
-        appendControlChangeToBuffer(10, midiCC, midiCurrentCC);
+        appendCCToBuffer(MIDI_CHAN, MIDI_CC, midiCurrentCC);
         MidiUSB.flush(); // Sends Midi Buffer content
 
         midiPreviousCC = midiCurrentCC;
     }
 }
 
-void appendControlChangeToBuffer(byte channel, byte control, byte value)
+void appendCCToBuffer(byte channel, byte control, byte value)
 {
     midiEventPacket_t event = {0x0B, 0xB0 | channel, control, value};
     MidiUSB.sendMIDI(event);
@@ -98,6 +122,6 @@ void appendControlChangeToBuffer(byte channel, byte control, byte value)
 
 int applyCurve(float input)
 {
-    float result = input * 0.1;
+    float result = input * 0.1; // just linear at the moment
     return (int)result;
 }
