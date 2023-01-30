@@ -2,6 +2,7 @@
 #include <SPI.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BME280.h>
+#include <MIDIUSB.h>
 
 #define BME_SCK 13
 #define BME_MISO 12
@@ -10,7 +11,14 @@
 #define SEALEVELPRESSURE_HPA (1013.25)
 
 Adafruit_BME280 bme; // I2C communication
-unsigned long delayTime;
+float baselinePressure = 0;
+unsigned long delayTime = 12;
+
+byte cc = 10; // CC (0-127)
+float rawState = 0;
+float normalizedState = 0;
+int midiCurrentState = 0; // Current state of the CC midi value 7bit
+int midiPrevState = 0;    // Previous loop state of the CC midi value 7bit
 
 void setup()
 {
@@ -25,7 +33,6 @@ void setup()
         }
     }
 
-    // gaming-style responsiveness setup:
     // Serial.println("-- Gaming Scenario --");
     // Serial.println("normal mode, 4x pressure / 1x temperature / 0x humidity oversampling,");
     // Serial.println("= humidity off, 0.5ms standby period, filter 16x");
@@ -41,35 +48,55 @@ void setup()
     // T_ovs = 1
     // P_ovs = 4
     // = 11.5ms + 0.5ms standby
-    delayTime = 12;
 
-    // delayTime = 5000; // for testing
+    baselinePressure = bme.readPressure();
 }
 
 void loop()
 {
     // bme.takeForcedMeasurement(); // has no effect in normal mode, can be removed
 
-    printValues();
+    xfader();
+    //  Serial.println(bme.readPressure());
+
     delay(delayTime);
 }
 
-void printValues()
+void controlChange(byte channel, byte control, byte value)
 {
-    // Serial.print("Temperature = ");
-    // Serial.print(bme.readTemperature());
-    // Serial.println(" *C");
+    midiEventPacket_t event = {0x0B, 0xB0 | channel, control, value};
+    MidiUSB.sendMIDI(event);
+}
 
-    // Serial.print("Pressure in hPa = ");
-    // Serial.println(bme.readPressure() / 100.0F);
+void xfader()
+{
+    rawState = bme.readPressure(); // raw input
 
-    // Serial.print("Approx. Altitude in m = ");
-    // Serial.println(bme.readAltitude(SEALEVELPRESSURE_HPA));
+    if (rawState > baselinePressure)
+    {
+        normalizedState = rawState - baselinePressure;
+    }
+    else
+    {
+        normalizedState = 0;
+    }
 
-    // Serial.println("Humidity in % = ");
-    // Serial.print(bme.readHumidity());
+    // midiCurrentState = normalizedState * 0.1;
+    midiCurrentState = constrain(applyCurve(normalizedState), 0, 127);
 
-    // Serial.println();
+    if (midiPrevState != midiCurrentState)
+    { // only send CC change if midistate has changed
 
-    Serial.println(bme.readPressure());
+        controlChange(10, cc, midiCurrentState); // send control change (channel, CC, value) to Midi Buffer
+        MidiUSB.flush();                         // flush Midi Buffer (-> send CC)
+        // Serial.println(midiCurrentState); // print midi position
+
+        midiPrevState = midiCurrentState; // Stores the current Midistate to compare with the next on next loop
+    }
+}
+
+int applyCurve(float input)
+{
+    float result = input * 0.1;
+    return (int)result;
 }

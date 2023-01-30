@@ -2,6 +2,6 @@
     "sketch": "midi_blows.ino",
     "board": "arduino:avr:micro",
     "programmer": "avrispmkii",
-    "port": "/dev/tty.usbmodem1101",
+    "port": "/dev/tty.usbmodemMIDI1",
     "output": "../build"
 }
