@@ -19,8 +19,10 @@
                 "/Users/anz/Library/Arduino15/packages/arduino/hardware/avr/1.8.6/cores/arduino",
                 "/Users/anz/Library/Arduino15/packages/arduino/hardware/avr/1.8.6/variants/micro",
                 "/Users/anz/Library/Arduino15/packages/arduino/hardware/avr/1.8.6/libraries/Wire/src",
-                "/Users/anz/Documents/Arduino/libraries/BlueDot_BME280_Library",
                 "/Users/anz/Library/Arduino15/packages/arduino/hardware/avr/1.8.6/libraries/SPI/src",
+                "/Users/anz/Documents/Arduino/libraries/Adafruit_Unified_Sensor",
+                "/Users/anz/Documents/Arduino/libraries/Adafruit_BME280_Library",
+                "/Users/anz/Documents/Arduino/libraries/Adafruit_BusIO",
                 "/Users/anz/Library/Arduino15/packages/arduino/tools/avr-gcc/7.3.0-atmel3.6.1-arduino7/lib/gcc/avr/7.3.0/include",
                 "/Users/anz/Library/Arduino15/packages/arduino/tools/avr-gcc/7.3.0-atmel3.6.1-arduino7/lib/gcc/avr/7.3.0/include-fixed",
                 "/Users/anz/Library/Arduino15/packages/arduino/tools/avr-gcc/7.3.0-atmel3.6.1-arduino7/avr/include"
