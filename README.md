@@ -14,19 +14,23 @@ Ingredients:
 - Some VST have an expression control to map the controller to. If not, maybe just map it to the instrument's volume or filter cutoff frequency.
 - Wind instruments and Strings work really well!
 
-## Build Details and Possible Improvements
+## Build Details and Other Thoughts
 
 - Air escape hole location and sizes can vary. Currently the air hole in my prototype has been drilled into the bottom area of the mouth piece (about 3mm size), not the pressure container. That seems to work quite well.
 - Further tweaking the Oversampling and Filter settings for the sensor could reduce latency even more. It is very responsive already though.
 - Tubing diameter and pressure container design could be experimented with.
 - The pressure container volume can easily be changed with the syringe plunger with changes the responsiveness and required blowing force.
+- The pressure to CC conversion curve function can easily be edited to adapt to preference. At the moment its a simple linear scaling function.
+- The sensor pressure baseline can be reset by restarting the device.
 
 ## Links
 
 - [Video with Sound](https://youtu.be/7HZMLERt6Gc) Sorry, I am neither a woodwind, nor a piano player 😝
-- [Datasheet](https://www.bosch-sensortec.com/products/environmental-sensors/humidity-sensors-bme280/#documents) for the BME280
+- [Datasheet](https://www.bosch-sensortec.com/products/environmental-sensors/humidity-sensors-bme280/#documents) for the BME280. The BMP280 is cheaper and should work just as well.
 - Commercially available USB Breath controller for comparison from [Tecontrol](https://www.tecontrol.se/products/usb-midi-breath-controller) (Quite pricey!)
 
----
+## Pictures
+
+It doesn't look too attractive, but works well 🤷
 
 ![current_version](./midi_blows_pic.jpg)
