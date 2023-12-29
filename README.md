@@ -1,3 +1,7 @@
+If you like this project, consider buying me a coffee :) Thx!! 
+<script type='text/javascript' src='https://storage.ko-fi.com/cdn/widget/Widget_2.js'></script><script type='text/javascript'>kofiwidget2.init('Support Me on Ko-fi', '#28e044', 'S6S8SP865');kofiwidget2.draw();</script> 
+
+
 # Midi Blows!!
 
 An Arduino USB Breath Controller using cheap as components. Surprisingly intuitive to use :)
