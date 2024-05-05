@@ -43,6 +43,8 @@ void setup()
         delay(3000);
     }
 
+    Serial.end(); // Comment this out for debugging
+
     baselinePressure = bme.readPressure();
 
     // Sensor Settings (Datasheet: https://www.bosch-sensortec.com/products/environmental-sensors/humidity-sensors-bme280/#documents)
@@ -69,12 +71,12 @@ void setup()
     /////////////////////////////////////////////////////////////////////////
     // Let's experiment with the standard settings to reduce latency:
     bme.setSampling(Adafruit_BME280::MODE_NORMAL,
-                    Adafruit_BME280::SAMPLING_NONE, // temperature
+                    Adafruit_BME280::SAMPLING_X1,   // temperature
                     Adafruit_BME280::SAMPLING_X4,   // pressure
                     Adafruit_BME280::SAMPLING_NONE, // humidity
                     Adafruit_BME280::FILTER_X4,
                     Adafruit_BME280::STANDBY_MS_0_5);
-    delayBetweenMeasurements = 10;
+    delayBetweenMeasurements = 12;
 }
 
 void loop()
@@ -99,10 +101,11 @@ void sendPressureAsCC(float rawPressure)
     // Serial.println(applyCurve(normalizedPressure));
 
     midiCurrentCC = constrain(applyCurve(normalizedPressure), 0, 127);
-    // Serial.println(midiCurrentCC);
 
     if (midiPreviousCC != midiCurrentCC)
     {
+        // Serial.println(midiCurrentCC);
+
         appendCCToBuffer(MIDI_CHAN, MIDI_CC, midiCurrentCC);
         MidiUSB.flush(); // Sends Midi Buffer content
 
@@ -118,6 +121,6 @@ void appendCCToBuffer(byte channel, byte control, byte value)
 
 int applyCurve(float input)
 {
-    float result = input * 0.1; // just linear at the moment
+    float result = input * 0.15; // just linear at the moment
     return (int)result;
 }
