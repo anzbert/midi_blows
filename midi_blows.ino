@@ -6,21 +6,23 @@
 #include <Adafruit_BME280.h>
 #include <MIDIUSB.h>
 
-#define BME_SCK 13  // for SPI communication
-#define BME_MISO 12 // for SPI communication
-#define BME_MOSI 11 // for SPI communication
-#define BME_CS 10   // for SPI communication
-
-#define I2C_ADDRESS 0x76 // bme280 sensor address for I2C communication
-
 #define SEALEVELPRESSURE_HPA (1013.25)
 
-#define MIDI_CHAN 10 // (0 to 15) +1 = (Channel 1 to 16)
-#define MIDI_CC 11   // control change number (0 - 127)
-
-Adafruit_BME280 bme; // use I2C
+// //// SPI
+// #define BME_SCK 13  // for SPI communication
+// #define BME_MISO 12 // for SPI communication
+// #define BME_MOSI 11 // for SPI communication
+// #define BME_CS 10   // for SPI communication
 // Adafruit_BME280 bme(BME_CS); // hardware SPI
 // Adafruit_BME280 bme(BME_CS, BME_MOSI, BME_MISO, BME_SCK); // software SPI
+
+// //// I2C
+#define I2C_ADDRESS 0x76 // bme280 sensor address for I2C communication
+Adafruit_BME280 bme;     // use I2C
+
+// //// MIDI
+#define MIDI_CHAN 1 // (0 to 15) +1 = (Channel 1 to 16)
+#define MIDI_CC 1   // control change number (0 - 127)
 
 float baselinePressure = SEALEVELPRESSURE_HPA;
 float rawPressure = SEALEVELPRESSURE_HPA;
